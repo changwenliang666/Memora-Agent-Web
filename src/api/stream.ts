@@ -1,18 +1,20 @@
+import { resolveApiBaseURL } from '@/api/baseUrl'
+
 export interface StreamHandlers {
   onToken: (text: string) => void
   signal?: AbortSignal
 }
 
 /** 有网关则走真实 SSE；失败或未配置时回落到前端演示流，方便验收发送 / 停止 */
-export async function streamChat(prompt: string, handlers: StreamHandlers): Promise<void> {
-  const baseURL = (import.meta.env.VITE_API_BASE_URL ?? '').trim()
+export async function streamChat(message: string, handlers: StreamHandlers): Promise<void> {
+  const baseURL = resolveApiBaseURL()
 
   if (baseURL) {
     try {
-      const response = await fetch(`${baseURL.replace(/\/$/, '')}/knowledge/chat/stream`, {
+      const response = await fetch(`${baseURL.replace(/\/$/, '')}/langgraph/agent-run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ message }),
         signal: handlers.signal,
       })
 
@@ -27,7 +29,7 @@ export async function streamChat(prompt: string, handlers: StreamHandlers): Prom
     }
   }
 
-  await readSseStream(createMockStream(prompt, handlers.signal), handlers)
+  await readSseStream(createMockStream(message, handlers.signal), handlers)
 }
 
 async function readSseStream(
@@ -49,7 +51,6 @@ async function readSseStream(
       // SSE 事件以空行分隔；最后一段可能不完整，留到下次再拼
       const chunks = buffer.split('\n\n')
       buffer = chunks.pop() ?? ''
-
       for (const chunk of chunks) {
         const line = chunk.split('\n').find((item) => item.startsWith('data:'))
         if (!line) {
@@ -61,23 +62,13 @@ async function readSseStream(
           return
         }
 
-        const token = parseToken(data)
-        if (token) {
-          handlers.onToken(token)
+        if (data) {
+          handlers.onToken(data)
         }
       }
     }
   } finally {
     reader.releaseLock()
-  }
-}
-
-function parseToken(data: string): string {
-  try {
-    const parsed = JSON.parse(data) as { delta?: string; text?: string; content?: string }
-    return parsed.delta ?? parsed.text ?? parsed.content ?? ''
-  } catch {
-    return data
   }
 }
 
@@ -95,7 +86,7 @@ function createMockStream(prompt: string, signal?: AbortSignal): ReadableStream<
           return
         }
 
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: char })}\n\n`))
+        controller.enqueue(encoder.encode(`data: ${char}\n\n`))
         await wait(24, signal)
       }
 

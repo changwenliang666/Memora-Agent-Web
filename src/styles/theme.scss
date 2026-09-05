@@ -9,6 +9,8 @@
   --color-sidebar: #0f172a;
   --color-sidebar-text: #e5e7eb;
   --color-chart-ingest: #0d9488;
+  --color-avatar-bg: #1e3a8a;
+  --color-avatar-text: #ffffff;
   /* 让按钮、分段等 Element 控件跟平台主色，而不是默认 #409EFF */
   --el-color-primary: var(--color-primary);
 }
@@ -24,5 +26,7 @@ html.dark {
   --color-sidebar: #0b1220;
   --color-sidebar-text: #e5e7eb;
   --color-chart-ingest: #2dd4bf;
+  --color-avatar-bg: #3d5bd6;
+  --color-avatar-text: #ffffff;
   --el-color-primary: var(--color-primary);
 }

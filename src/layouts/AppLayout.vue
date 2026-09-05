@@ -22,19 +22,22 @@
           </el-button>
           <h1 class="page-title">{{ pageTitle }}</h1>
         </div>
-        <!-- 浅色显示月亮（切到深色），深色显示太阳（切回浅色） -->
-        <el-button
-          class="icon-btn"
-          text
-          :aria-label="themeToggleLabel"
-          :title="themeToggleLabel"
-          @click="themeStore.toggle()"
-        >
-          <el-icon :size="18">
-            <Moon v-if="themeStore.mode === 'light'" />
-            <Sunny v-else />
-          </el-icon>
-        </el-button>
+        <div class="header-actions">
+          <UserMenu />
+          <!-- 浅色显示月亮（切到深色），深色显示太阳（切回浅色） -->
+          <el-button
+            class="icon-btn"
+            text
+            :aria-label="themeToggleLabel"
+            :title="themeToggleLabel"
+            @click="themeStore.toggle()"
+          >
+            <el-icon :size="18">
+              <Moon v-if="themeStore.mode === 'light'" />
+              <Sunny v-else />
+            </el-icon>
+          </el-button>
+        </div>
       </header>
 
       <div class="app-content">
@@ -67,6 +70,7 @@ import { useBreakpoint } from '@/composables/useBreakpoint'
 import { pageTitles } from '@/router/nav'
 import { useThemeStore } from '@/stores/theme'
 import AppNav from './AppNav.vue'
+import UserMenu from './UserMenu.vue'
 
 const route = useRoute()
 const themeStore = useThemeStore()
@@ -88,6 +92,7 @@ watch(isPhone, (phone) => {
     drawerOpen.value = false
   }
 })
+
 </script>
 
 <style lang="scss" scoped>
@@ -180,6 +185,13 @@ watch(isPhone, (phone) => {
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.header-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
 }
 
 .icon-btn {

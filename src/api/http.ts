@@ -1,4 +1,6 @@
-import axios, { type AxiosError, type AxiosInstance } from 'axios'
+import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
+import { useAuthStore } from '@/stores/auth'
+import { resolveApiBaseURL } from '@/api/baseUrl'
 
 export type HttpErrorCode = 'http' | 'timeout' | 'network' | 'config'
 
@@ -67,7 +69,7 @@ function fromAxiosError(error: AxiosError<{ message?: string }>): NormalizedHttp
 }
 
 const http: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '',
+  baseURL: resolveApiBaseURL(),
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
@@ -83,12 +85,32 @@ http.interceptors.request.use((config) => {
     throw new HttpConfigError()
   }
 
+  attachAuthHeader(config)
   return config
 })
 
 http.interceptors.response.use(
   (response) => response,
-  (error: unknown) => Promise.reject(toNormalizedHttpError(error)),
+  (error: unknown) => {
+      // 只清会话，跳转交给路由守卫，避免和进行中的导航抢状态
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      useAuthStore().clearSession()
+    }
+    return Promise.reject(toNormalizedHttpError(error))
+  },
 )
+
+/** 有未过期会话才带 Bearer；过期或未登录不伪造认证头 */
+function attachAuthHeader(config: InternalAxiosRequestConfig) {
+  const auth = useAuthStore()
+  if (!auth.refresh() || !auth.session) {
+    if (config.headers) {
+      delete config.headers.Authorization
+    }
+    return
+  }
+
+  config.headers.Authorization = `Bearer ${auth.session.token}`
+}
 
 export { http }
