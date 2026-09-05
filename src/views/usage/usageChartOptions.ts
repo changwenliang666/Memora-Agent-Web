@@ -41,6 +41,14 @@ function axis(palette: ChartPalette) {
   }
 }
 
+/** 折线 / 柱状共用：图例钉在顶部，避开 ECharts 6 默认底部叠轴 */
+function cartesianChrome(palette: ChartPalette) {
+  return {
+    legend: { top: 0, data: ['问答', '入库'], textStyle: { color: palette.text } },
+    grid: { left: 48, right: 16, top: 40, bottom: 32 },
+  }
+}
+
 export function buildLineOption(buckets: UsageBucket[], palette: ChartPalette): EChartsOption {
   const series = toSeries(buckets)
 
@@ -48,8 +56,7 @@ export function buildLineOption(buckets: UsageBucket[], palette: ChartPalette): 
     backgroundColor: 'transparent',
     color: [palette.chat, palette.ingest],
     tooltip: { trigger: 'axis' },
-    legend: { data: ['问答', '入库'], textStyle: { color: palette.text } },
-    grid: { left: 48, right: 16, top: 40, bottom: 32 },
+    ...cartesianChrome(palette),
     xAxis: { type: 'category', data: series.periods, ...axis(palette) },
     yAxis: { type: 'value', ...axis(palette) },
     series: [
@@ -66,8 +73,7 @@ export function buildBarOption(buckets: UsageBucket[], palette: ChartPalette): E
     backgroundColor: 'transparent',
     color: [palette.chat, palette.ingest],
     tooltip: { trigger: 'axis' },
-    legend: { data: ['问答', '入库'], textStyle: { color: palette.text } },
-    grid: { left: 48, right: 16, top: 40, bottom: 32 },
+    ...cartesianChrome(palette),
     xAxis: { type: 'category', data: series.periods, ...axis(palette) },
     yAxis: { type: 'value', ...axis(palette) },
     series: [
