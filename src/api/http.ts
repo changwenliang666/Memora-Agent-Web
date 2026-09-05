@@ -78,6 +78,7 @@ http.interceptors.request.use((config) => {
   const url = config.url ?? ''
   const baseURL = (config.baseURL ?? http.defaults.baseURL ?? '').trim()
 
+  // 相对路径必须有 VITE_API_BASE_URL，避免静默打到当前前端源
   if (!isAbsoluteUrl(url) && !baseURL) {
     throw new HttpConfigError()
   }

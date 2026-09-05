@@ -1,0 +1,28 @@
+:root {
+  --color-bg: #f5f7fb;
+  --color-text: #1f2937;
+  --color-primary: #1a5cff;
+  --color-border: #d1d5db;
+  --color-surface: #ffffff;
+  --color-muted: #6b7280;
+  --color-accent-soft: rgba(26, 92, 255, 0.1);
+  --color-sidebar: #0f172a;
+  --color-sidebar-text: #e5e7eb;
+  --color-chart-ingest: #0d9488;
+  /* 让按钮、分段等 Element 控件跟平台主色，而不是默认 #409EFF */
+  --el-color-primary: var(--color-primary);
+}
+
+html.dark {
+  --color-bg: #111827;
+  --color-text: #e5e7eb;
+  --color-primary: #5b8cff;
+  --color-border: #374151;
+  --color-surface: #1a2332;
+  --color-muted: #9ca3af;
+  --color-accent-soft: rgba(91, 140, 255, 0.16);
+  --color-sidebar: #0b1220;
+  --color-sidebar-text: #e5e7eb;
+  --color-chart-ingest: #2dd4bf;
+  --el-color-primary: var(--color-primary);
+}

@@ -1,3 +1,6 @@
+@use './theme.scss';
+@use './app-nav.scss';
+
 *,
 *::before,
 *::after {
@@ -8,7 +11,13 @@ html,
 body,
 #app {
   margin: 0;
+  height: 100%;
   min-height: 100%;
+}
+
+html,
+body {
+  overflow-x: hidden;
 }
 
 body {
@@ -16,4 +25,6 @@ body {
     sans-serif;
   color: $color-text;
   background: $color-bg;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
 }

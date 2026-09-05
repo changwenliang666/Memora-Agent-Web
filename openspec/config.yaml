@@ -1,32 +1,89 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  # 项目说明
+  这是一个基于 Vue 3 的前端 Web 项目。
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  # 技术栈
+  - Vue 3
+  - TypeScript
+  - Vite
+  - Axios
+  - Element Plus
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+  # Vue 开发规范
+  - 使用 Vue 3 Composition API。
+  - Vue 组件优先使用 <script setup lang="ts">。
+  - 项目代码优先使用 TypeScript。
+  - 除非有明确理由，否则不要使用 JavaScript。
+  - Vue 组件应该保持单一职责，避免单个组件承担过多功能。
+  - Vue 组件中 <template></template>放到最上面,其次是<script></script>,最后是<style></style>,不要更改这个顺序
+>
+  # UI 组件规范
+  - 页面开发优先使用 Element Plus 提供的组件。
+  - 创建自定义 UI 组件之前，先检查 Element Plus 是否已经提供了满足需求的组件。
+  - 如果 Element Plus 已经提供对应功能，不要重复实现。
+  - 按钮、表单、输入框、表格、弹窗、抽屉、通知、菜单、分页、Loading 等通用 UI 优先使用 Element Plus。
+  - 只有当 Element Plus 无法合理满足需求，或者组件属于项目特有的业务功能时，才创建自定义组件。
+  - 不要随意引入其他 UI 组件库。
+
+  # 样式规范
+  - Element Plus 组件允许使用项目自己的 CSS 或 SCSS 进行样式覆盖。
+  - 禁止修改 Element Plus 源码。
+  - 禁止直接修改 node_modules 中的文件。
+  - 组件自己的样式优先使用 scoped。
+  - 覆盖 Element Plus 样式时，优先使用项目自己的 class 名称。
+  - 尽量避免大量使用 !important。
+  - 保持项目整体 UI 风格统一。
+
+  # Axios / HTTP 规范
+  - 项目统一使用 Axios 进行 HTTP 请求。
+  - Axios 应进行统一封装和配置。
+  - 不要在不同页面中重复创建 Axios 实例。
+  - API 请求逻辑应该与 Vue 页面组件分离。
+  - 页面组件中不要编写复杂的 HTTP 请求逻辑。
+  - Axios 统一处理 baseURL、timeout、请求头、认证信息以及通用错误处理等逻辑。
+
+  # 代码规范
+  - 优先选择简单、清晰、容易维护的实现方式。
+  - 不要为了简单需求引入复杂的抽象。
+  - 不要随意增加依赖。
+  - 优先复用项目中已经存在的组件、工具函数和代码模式。
+  - 修改已有代码时，优先遵循项目现有代码风格。
+  - 只实现当前需求，不增加无关功能。
+  - 不要过度设计或过度工程化。
+  - 创建新文件、新组件或新抽象之前，先检查现有代码是否可以复用。
+  - 要合理的给代码增加注释，必要的地方要说明，很明显的地方不需要加注释
+
+rules:
+  proposal:
+    - 明确说明本次变更的目标。
+    - 明确说明本次变更包含的内容和不包含的内容。
+    - 不要加入与当前需求无关的功能。
+
+  design:
+    - 优先选择能够满足需求的最简单方案。
+    - 必须遵循项目规定的技术栈和开发规范。
+    - 优先复用项目已有的组件、工具和代码模式。
+    - 涉及页面 UI 时，优先考虑 Element Plus，而不是直接设计自定义组件。
+    - 涉及 HTTP 请求时，统一使用 Axios。
+
+  tasks:
+    - 将开发工作拆分成清晰、独立、可验证的任务。
+    - 每个任务都应该描述具体的开发动作。
+    - 不要加入与当前需求无关的任务。
+    - 在适当的情况下增加测试或验证任务。
+
+operations:
+  apply:
+    guidance:
+      - 开发过程中必须遵守项目上下文和上述开发规范。
+      - 不要修改与当前需求无关的文件。
+      - 创建自定义 UI 组件之前，必须确认 Element Plus 是否无法满足需求。
+      - 添加新的依赖之前，必须确认现有依赖无法满足需求。
+      - 保持实现简单，不要过度工程化。
+
+  archive:
+    guidance:
+      - 归档之前检查实现是否符合项目规范和对应的 Spec。
+      - 总结本次变更的实现结果以及验证结果。
