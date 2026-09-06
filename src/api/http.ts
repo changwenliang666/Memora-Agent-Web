@@ -52,11 +52,54 @@ function isNormalizedHttpError(error: unknown): error is NormalizedHttpError {
   )
 }
 
-function fromAxiosError(error: AxiosError<{ message?: string }>): NormalizedHttpError {
+type ErrorBody = {
+  message?: string
+  detail?: unknown
+}
+
+function readErrorMessage(data: ErrorBody | undefined, fallback: string): string {
+  const fromDetail = readDetailMessage(data?.detail)
+  if (fromDetail) {
+    return fromDetail
+  }
+
+  if (typeof data?.message === 'string' && data.message.trim()) {
+    return data.message
+  }
+
+  return fallback
+}
+
+function readDetailMessage(detail: unknown): string | undefined {
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail
+  }
+
+  if (Array.isArray(detail) && detail.length > 0) {
+    const first = detail[0]
+    if (typeof first === 'string' && first.trim()) {
+      return first
+    }
+    if (first && typeof first === 'object') {
+      const nested = (first as { msg?: string; message?: string }).msg
+        ?? (first as { msg?: string; message?: string }).message
+      if (typeof nested === 'string' && nested.trim()) {
+        return nested
+      }
+    }
+  }
+
+  return undefined
+}
+
+function fromAxiosError(error: AxiosError<ErrorBody>): NormalizedHttpError {
   if (error.response) {
     return {
       status: error.response.status,
-      message: error.response.data?.message || error.response.statusText || error.message,
+      message: readErrorMessage(
+        error.response.data,
+        error.response.statusText || error.message,
+      ),
       code: 'http',
     }
   }

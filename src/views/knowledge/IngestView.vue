@@ -4,7 +4,7 @@
       <p class="kicker">知识库录入</p>
       <h2>把文件送进知识库</h2>
       <p class="lead">
-        当前为演示队列：上传实现已留空，后续可替换为 Cloudflare。文件名包含 fail 的条目会走到失败态。
+        选择或拖入文档后会直传到对象存储。仅支持 pdf / txt / md，单个不超过 100MB。
       </p>
     </section>
 
@@ -14,12 +14,12 @@
       multiple
       :auto-upload="false"
       :show-file-list="false"
-      accept=".pdf,.txt,.md,.docx"
+      accept=".pdf,.txt,.md"
       @change="onChange"
     >
       <div class="drop-inner">
         <p class="drop-title">拖拽文件到这里，或点击选择</p>
-        <p class="drop-hint">支持 pdf / txt / md / docx，单个不超过 20MB</p>
+        <p class="drop-hint">支持 pdf / txt / md，单个不超过 100MB</p>
       </div>
     </el-upload>
 

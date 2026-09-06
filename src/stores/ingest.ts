@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { toNormalizedHttpError } from '@/api/http'
 import {
   ALLOWED_EXTENSIONS,
   getFileExtension,
@@ -34,7 +35,7 @@ export const useIngestStore = defineStore('ingest', () => {
         name: file.name,
         size: file.size,
         status: 'waiting',
-        message: '等待上传（演示，未接通云存储）',
+        message: '等待上传',
       }
 
       const extension = getFileExtension(file.name)
@@ -47,7 +48,7 @@ export const useIngestStore = defineStore('ingest', () => {
 
       if (file.size > MAX_FILE_SIZE) {
         item.status = 'failed'
-        item.message = '文件超过 20MB'
+        item.message = '文件超过 100MB'
         queue.value.unshift(item)
         continue
       }
@@ -59,15 +60,15 @@ export const useIngestStore = defineStore('ingest', () => {
 
   async function runUpload(item: IngestQueueItem, file: File) {
     item.status = 'processing'
-    item.message = '处理中（演示占位）'
+    item.message = '上传中'
 
     try {
       await uploadKnowledgeFile(file)
       item.status = 'ready'
-      item.message = '演示就绪，尚未写入真实知识库'
+      item.message = '已上传'
     } catch (error) {
       item.status = 'failed'
-      item.message = error instanceof Error ? error.message : '上传失败'
+      item.message = toNormalizedHttpError(error).message
     }
   }
 

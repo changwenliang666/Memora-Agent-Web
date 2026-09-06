@@ -1,5 +1,9 @@
-export const MAX_FILE_SIZE = 20 * 1024 * 1024
-export const ALLOWED_EXTENSIONS = ['pdf', 'txt', 'md', 'docx'] as const
+import axios from 'axios'
+import { HttpConfigError, http } from '@/api/http'
+import { resolveAgentApiBaseURL } from '@/api/baseUrl'
+
+export const MAX_FILE_SIZE = 104_857_600
+export const ALLOWED_EXTENSIONS = ['pdf', 'txt', 'md'] as const
 
 export type IngestStatus = 'waiting' | 'processing' | 'ready' | 'failed'
 export type RecordStatus = 'processing' | 'ready' | 'failed'
@@ -12,19 +16,51 @@ export interface KnowledgeRecord {
   createdAt: string
 }
 
+interface PresignResponse {
+  upload_url: string
+  object_key: string
+  expires_in: number
+}
+
 export async function uploadKnowledgeFile(
   file: File,
   onProgress?: (percent: number) => void,
 ): Promise<void> {
-  onProgress?.(15)
-  await delay(400)
-  onProgress?.(70)
-  await delay(400)
-  onProgress?.(100)
-
-  if (file.name.toLowerCase().includes('fail')) {
-    throw new Error('演示失败：文件名包含 fail')
+  const agentBaseURL = resolveAgentApiBaseURL()
+  if (!agentBaseURL) {
+    throw new HttpConfigError('VITE_AGENT_API_BASE_URL is not configured')
   }
+
+  const contentType = resolveContentType(file.name)
+  const declaration = {
+    filename: file.name,
+    content_type: contentType,
+    size: file.size,
+  }
+
+  const { data } = await http.post<PresignResponse>('/files/presign', declaration, {
+    baseURL: agentBaseURL,
+  })
+  onProgress?.(10)
+
+  await axios.put(data.upload_url, file, {
+    headers: { 'Content-Type': contentType },
+    timeout: 0,
+    onUploadProgress(event) {
+      if (!event.total) {
+        return
+      }
+      onProgress?.(10 + Math.round((event.loaded / event.total) * 80))
+    },
+  })
+
+  await http.post('/files/complete', {
+    object_key: data.object_key,
+    ...declaration,
+  }, {
+    baseURL: agentBaseURL,
+  })
+  onProgress?.(100)
 }
 
 export async function listKnowledgeRecords(): Promise<KnowledgeRecord[]> {
@@ -57,8 +93,6 @@ export function getFileExtension(name: string): string {
   return name.includes('.') ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : ''
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms)
-  })
+function resolveContentType(filename: string): string {
+  return getFileExtension(filename) === 'pdf' ? 'application/pdf' : 'text/plain'
 }
