@@ -17,6 +17,8 @@ export interface IngestQueueItem {
   size: number
   status: IngestStatus
   message: string
+  progress:number,
+  updateProgress:(curProgress:number) => void
 }
 
 function createId() {
@@ -30,40 +32,45 @@ export const useIngestStore = defineStore('ingest', () => {
 
   function enqueue(files: File[]) {
     for (const file of files) {
-      const item: IngestQueueItem = {
+      const item = ref<IngestQueueItem>({
         id: createId(),
         name: file.name,
         size: file.size,
         status: 'waiting',
         message: '等待上传',
-      }
+        progress:0,
+        updateProgress:(curProgress:number) => {
+          item.value.progress = curProgress;
+        }
+      })
 
       const extension = getFileExtension(file.name)
       if (!ALLOWED_EXTENSIONS.includes(extension as (typeof ALLOWED_EXTENSIONS)[number])) {
-        item.status = 'failed'
-        item.message = `不支持的类型：.${extension || 'unknown'}`
-        queue.value.unshift(item)
+        item.value.status = 'failed'
+        item.value.message = `不支持的类型：.${extension || 'unknown'}`
+        queue.value.unshift(item.value)
         continue
       }
 
       if (file.size > MAX_FILE_SIZE) {
-        item.status = 'failed'
-        item.message = '文件超过 100MB'
-        queue.value.unshift(item)
+        item.value.status = 'failed'
+        item.value.message = '文件超过 100MB'
+        queue.value.unshift(item.value)
         continue
       }
 
-      queue.value.unshift(item)
-      void runUpload(item, file)
+      queue.value.unshift(item.value)
+      void runUpload(item.value, file)
     }
   }
 
   async function runUpload(item: IngestQueueItem, file: File) {
     item.status = 'processing'
     item.message = '上传中'
+    item.progress = 0;
 
     try {
-      await uploadKnowledgeFile(file)
+      await uploadKnowledgeFile(file,item.updateProgress)
       item.status = 'ready'
       item.message = '已上传'
     } catch (error) {

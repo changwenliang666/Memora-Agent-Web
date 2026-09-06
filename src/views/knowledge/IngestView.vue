@@ -63,10 +63,10 @@ function formatSize(size: number) {
 
 function statusLabel(status: string) {
   if (status === 'ready') {
-    return '已就绪'
+    return '入库中'
   }
   if (status === 'failed') {
-    return '失败'
+    return '失败' 
   }
   if (status === 'processing') {
     return '处理中'
