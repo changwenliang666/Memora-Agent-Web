@@ -17,8 +17,9 @@ Memora Agent 的 Vue 3 前端：一套 RAG 知识库工作台，覆盖问答、�
 
 当前对接状态：
 
-- **问答**：已配置 `VITE_API_BASE_URL` 时请求 `POST /knowledge/chat/stream`；失败或未接通时回落前端演示流，便于验收发送、停止和贴底滚动。
-- **录入 / 入库记录 / 用量**：本阶段为可替换的演示数据。录入页上传步骤已留空，文件名包含 `fail` 的条目会走到失败态。
+- **登录 / 注册**：开发环境默认请求 FastAPI `http://localhost:8000` 的 `/auth/login` 与 `/auth/register`。
+- **问答**：FastAPI 问答流尚未接通，发送后走前端演示流，便于验收发送、停止和贴底滚动。
+- **录入**：已配置 API 基址时按 `presign` → R2 `PUT` → `complete` 直传；入库记录与用量仍为演示数据。
 
 ## 技术栈
 
@@ -62,11 +63,11 @@ pnpm dev
 
 ## 环境变量
 
-复制 `.env.example` 为本地环境文件。开发环境已提供 `.env.development`（默认 `http://localhost:8080`）。
+复制 `.env.example` 为本地环境文件。开发环境已提供 `.env.development`（默认 `http://localhost:8000`）。
 
 | 变量 | 说明 |
 |---|---|
-| `VITE_API_BASE_URL` | API 基址。问答流式接口会拼到该地址后；未配置时，相对路径 HTTP 请求会被拒绝，问答回落到演示流。 |
+| `VITE_API_BASE_URL` | FastAPI 基址。登录、注册、文件接口都拼到该地址后；未配置时，相对路径 HTTP 请求会被拒绝。 |
 
 生产环境由部署注入 `.env.production` 中的值。不要把真实密钥写进仓库。
 

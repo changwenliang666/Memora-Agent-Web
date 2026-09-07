@@ -18,7 +18,8 @@ function readStored(): AuthSession | null {
       typeof parsed.token !== 'string' ||
       !parsed.token ||
       typeof parsed.expiresAt !== 'number' ||
-      typeof parsed.account !== 'string'
+      typeof parsed.account !== 'string' ||
+      typeof parsed.nickname !== 'string'
     ) {
       localStorage.removeItem(STORAGE_KEY)
       return null
@@ -33,6 +34,7 @@ function readStored(): AuthSession | null {
       token: parsed.token,
       expiresAt: parsed.expiresAt,
       account: parsed.account,
+      nickname: parsed.nickname,
     }
   } catch {
     return null

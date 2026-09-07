@@ -5,30 +5,8 @@ export interface StreamHandlers {
   signal?: AbortSignal
 }
 
-/** 有网关则走真实 SSE；失败或未配置时回落到前端演示流，方便验收发送 / 停止 */
+/** FastAPI 问答流尚未接通时用前端演示流，便于验收发送 / 停止 */
 export async function streamChat(message: string, handlers: StreamHandlers): Promise<void> {
-  const baseURL = resolveApiBaseURL()
-
-  if (baseURL) {
-    try {
-      const response = await fetch(`${baseURL.replace(/\/$/, '')}/langgraph/agent-run`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message }),
-        signal: handlers.signal,
-      })
-
-      if (response.ok && response.body) {
-        await readSseStream(response.body, handlers)
-        return
-      }
-    } catch (error) {
-      if (isAbortError(error)) {
-        throw error
-      }
-    }
-  }
-
   await readSseStream(createMockStream(message, handlers.signal), handlers)
 }
 
@@ -111,8 +89,4 @@ function wait(ms: number, signal?: AbortSignal): Promise<void> {
 
     signal?.addEventListener('abort', onAbort, { once: true })
   })
-}
-
-function isAbortError(error: unknown) {
-  return error instanceof DOMException && error.name === 'AbortError'
 }

@@ -13,6 +13,7 @@ export function displayableAccount(account: string | null | undefined): string |
 
 /** 可展示账号的后 3 位；不可展示时返回 null */
 export function accountTailLabel(account: string | null | undefined): string | null {
+  console.log('accountTailLabel', account)
   const displayable = displayableAccount(account)
   return displayable ? displayable.slice(-3) : null
 }

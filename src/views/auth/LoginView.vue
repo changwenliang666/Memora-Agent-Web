@@ -84,10 +84,9 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { Moon, Sunny } from '@element-plus/icons-vue'
 import { login, register } from '@/api/auth'
-import { toNormalizedHttpError } from '@/api/http'
 import { safeRedirect } from '@/router/redirect'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
@@ -119,8 +118,11 @@ const themeToggleLabel = computed(() =>
 
 const rules = computed<FormRules>(() => ({
   account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  // 确认密码只做前端校验，不传给占位注册接口
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码至少 6 位', trigger: 'blur' },
+  ],
+  // 确认密码只做前端校验，不传给注册接口
   confirmPassword:
     mode.value === 'register'
       ? [
@@ -164,8 +166,8 @@ async function submit() {
     authStore.setSession(session)
     // redirect 只信站内相对路径，缺省进问答
     await router.replace(safeRedirect(route.query.redirect) ?? '/knowledge/chat')
-  } catch (error) {
-    ElMessage.error(toNormalizedHttpError(error).message)
+  } catch {
+    // 错误 toast 由 HTTP 拦截器统一处理
   } finally {
     submitting.value = false
   }

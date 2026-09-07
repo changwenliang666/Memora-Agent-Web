@@ -25,7 +25,7 @@ import { accountAvatarLabel } from '@/utils/accountLabel'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const avatarText = computed(() => accountAvatarLabel(authStore.session?.account))
+const avatarText = computed(() => accountAvatarLabel(authStore.session?.nickname))
 const menuLabel = computed(() => authStore.displayAccount ?? '账户菜单')
 
 function onCommand(command: string | number | object) {

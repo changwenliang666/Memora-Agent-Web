@@ -25,12 +25,6 @@ export default defineConfig({
   },
   server: {
     host: true,
-    proxy: {
-      '/langgraph': {
-        target: 'http://127.0.0.1:3000',
-        changeOrigin: true,
-      },
-    },
   },
   css: {
     preprocessorOptions: {

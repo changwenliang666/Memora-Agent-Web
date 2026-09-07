@@ -1,4 +1,5 @@
 import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
+import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { resolveApiBaseURL } from '@/api/baseUrl'
 
@@ -8,15 +9,24 @@ export interface NormalizedHttpError {
   status?: number
   message: string
   code: HttpErrorCode
+  bizCode?: number
 }
 
 export class HttpConfigError extends Error {
   readonly code = 'config' as const
 
-  constructor(message = 'VITE_API_BASE_URL is not configured') {
+  constructor(message = '未配置 API 基址') {
     super(message)
     this.name = 'HttpConfigError'
   }
+}
+
+const SUCCESS_CODE = 0
+
+interface Envelope {
+  code: number
+  message: string
+  data?: unknown
 }
 
 function isAbsoluteUrl(url: string): boolean {
@@ -37,34 +47,46 @@ export function toNormalizedHttpError(error: unknown): NormalizedHttpError {
   }
 
   return {
-    message: error instanceof Error ? error.message : 'Unknown error',
+    message: error instanceof Error ? error.message : '未知错误',
     code: 'network',
   }
 }
 
 function isNormalizedHttpError(error: unknown): error is NormalizedHttpError {
+  if (axios.isAxiosError(error) || typeof error !== 'object' || error === null) {
+    return false
+  }
+
+  const code = (error as NormalizedHttpError).code
   return (
-    typeof error === 'object' &&
-    error !== null &&
-    'message' in error &&
-    'code' in error &&
-    (error as NormalizedHttpError).code !== undefined
+    (code === 'http' || code === 'timeout' || code === 'network' || code === 'config')
+    && typeof (error as NormalizedHttpError).message === 'string'
+  )
+}
+
+function isEnvelope(data: unknown): data is Envelope {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    typeof (data as Envelope).code === 'number' &&
+    typeof (data as Envelope).message === 'string'
   )
 }
 
 type ErrorBody = {
+  code?: number
   message?: string
   detail?: unknown
 }
 
 function readErrorMessage(data: ErrorBody | undefined, fallback: string): string {
+  if (typeof data?.message === 'string' && data.message.trim()) {
+    return data.message
+  }
+
   const fromDetail = readDetailMessage(data?.detail)
   if (fromDetail) {
     return fromDetail
-  }
-
-  if (typeof data?.message === 'string' && data.message.trim()) {
-    return data.message
   }
 
   return fallback
@@ -94,21 +116,36 @@ function readDetailMessage(detail: unknown): string | undefined {
 
 function fromAxiosError(error: AxiosError<ErrorBody>): NormalizedHttpError {
   if (error.response) {
+    const data = error.response.data
     return {
       status: error.response.status,
       message: readErrorMessage(
-        error.response.data,
+        data,
         error.response.statusText || error.message,
       ),
       code: 'http',
+      bizCode: typeof data?.code === 'number' ? data.code : undefined,
     }
   }
 
   if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-    return { message: 'Request timed out', code: 'timeout' }
+    return { message: '请求超时', code: 'timeout' }
   }
 
-  return { message: error.message || 'Network error', code: 'network' }
+  return { message: error.message || '网络异常', code: 'network' }
+}
+
+function toastError(error: NormalizedHttpError) {
+  ElMessage.error(error.message)
+}
+
+function businessError(envelope: Envelope, status?: number): NormalizedHttpError {
+  return {
+    status,
+    message: envelope.message.trim() || '请求失败',
+    code: 'http',
+    bizCode: envelope.code,
+  }
 }
 
 const http: AxiosInstance = axios.create({
@@ -133,13 +170,29 @@ http.interceptors.request.use((config) => {
 })
 
 http.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const body = response.data
+    if (!isEnvelope(body)) {
+      return response
+    }
+
+    if (body.code === SUCCESS_CODE) {
+      response.data = body.data
+      return response
+    }
+
+    const error = businessError(body, response.status)
+    toastError(error)
+    return Promise.reject(error)
+  },
   (error: unknown) => {
-      // 只清会话，跳转交给路由守卫，避免和进行中的导航抢状态
+    // 只清会话，跳转交给路由守卫，避免和进行中的导航抢状态
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       useAuthStore().clearSession()
     }
-    return Promise.reject(toNormalizedHttpError(error))
+    const normalized = toNormalizedHttpError(error)
+    toastError(normalized)
+    return Promise.reject(normalized)
   },
 )
 

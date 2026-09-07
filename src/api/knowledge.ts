@@ -1,6 +1,5 @@
 import axios from 'axios'
-import { HttpConfigError, http } from '@/api/http'
-import { resolveAgentApiBaseURL } from '@/api/baseUrl'
+import { http, type NormalizedHttpError } from '@/api/http'
 
 export const MAX_FILE_SIZE = 104_857_600
 export const ALLOWED_EXTENSIONS = ['pdf', 'txt', 'md'] as const
@@ -26,11 +25,6 @@ export async function uploadKnowledgeFile(
   file: File,
   onProgress?: (percent: number) => void,
 ): Promise<void> {
-  const agentBaseURL = resolveAgentApiBaseURL()
-  if (!agentBaseURL) {
-    throw new HttpConfigError('VITE_AGENT_API_BASE_URL is not configured')
-  }
-
   const contentType = resolveContentType(file.name)
   const declaration = {
     filename: file.name,
@@ -38,9 +32,10 @@ export async function uploadKnowledgeFile(
     size: file.size,
   }
 
-  const { data } = await http.post<PresignResponse>('/files/presign', declaration, {
-    baseURL: agentBaseURL,
-  })
+  const { data } = await http.post<PresignResponse>('/files/presign', declaration)
+  if (!data?.upload_url) {
+    throw { message: '未获得上传地址', code: 'http' } satisfies NormalizedHttpError
+  }
   onProgress?.(10)
 
   await axios.put(data.upload_url, file, {
@@ -57,8 +52,6 @@ export async function uploadKnowledgeFile(
   await http.post('/files/complete', {
     object_key: data.object_key,
     ...declaration,
-  }, {
-    baseURL: agentBaseURL,
   })
   onProgress?.(100)
 }

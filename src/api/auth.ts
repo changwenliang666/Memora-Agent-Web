@@ -1,46 +1,83 @@
-import type { NormalizedHttpError } from '@/api/http'
+import { http, type NormalizedHttpError } from '@/api/http'
 
 export interface AuthSession {
   token: string
   expiresAt: number
   account: string
+  nickname: string
 }
 
-/** 占位会话有效期。接真实接口后改用后端返回的过期时间。 */
+/** JWT 无法读出 exp 时的回退有效期，与后端默认 7 天对齐。 */
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
-/** 占位登录。真实后端就绪后改为 POST /auth/login。 */
+interface LoginData {
+  token: string
+  user_id: number
+  username: string
+  nickname: string
+}
+
 export async function login(account: string, password: string): Promise<AuthSession> {
-  return issueSession(account, password)
-}
-
-/** 占位注册。真实后端就绪后改为 POST /auth/register。 */
-export async function register(account: string, password: string): Promise<AuthSession> {
-  return issueSession(account, password)
-}
-
-async function issueSession(account: string, password: string): Promise<AuthSession> {
-  const name = account.trim()
-  if (!name || !password) {
+  const username = account.trim()
+  if (!username || !password) {
     throw credentialError()
   }
 
-  // 模拟网络耗时，真实接口替换后删掉
-  await delay(320)
+  const { data } = await http.post<LoginData>('/auth/login', { username, password })
+  return sessionFromLogin(data)
+}
+
+export async function register(account: string, password: string): Promise<AuthSession> {
+  const username = account.trim()
+  if (!username || !password) {
+    throw credentialError()
+  }
+
+  await http.post('/auth/register', { username, password })
+  return login(username, password)
+}
+
+function sessionFromLogin(data: LoginData | undefined): AuthSession {
+  if (!data?.token || !data.username) {
+    throw {
+      status: 200,
+      message: '登录响应无效',
+      code: 'http',
+    } satisfies NormalizedHttpError
+  }
 
   return {
-    token: `demo.${Date.now().toString(36)}.${Math.random().toString(36).slice(2, 10)}`,
-    expiresAt: Date.now() + SESSION_TTL_MS,
-    account: name,
+    token: data.token,
+    expiresAt: readJwtExpiry(data.token) ?? Date.now() + SESSION_TTL_MS,
+    account: data.username,
+    nickname: data.nickname,
   }
+}
+
+function readJwtExpiry(token: string): number | null {
+  const payloadSegment = token.split('.')[1]
+  if (!payloadSegment) {
+    return null
+  }
+
+  try {
+    const payload = JSON.parse(decodeBase64Url(payloadSegment)) as { exp?: unknown }
+    if (typeof payload.exp !== 'number') {
+      return null
+    }
+    return payload.exp * 1000
+  } catch {
+    return null
+  }
+}
+
+function decodeBase64Url(segment: string): string {
+  const normalized = segment.replace(/-/g, '+').replace(/_/g, '/')
+  const pad = normalized.length % 4
+  const padded = pad ? `${normalized}${'='.repeat(4 - pad)}` : normalized
+  return atob(padded)
 }
 
 function credentialError(): NormalizedHttpError {
   return { status: 400, message: '请输入账号和密码', code: 'http' }
-}
-
-function delay(ms: number) {
-  return new Promise<void>((resolve) => {
-    window.setTimeout(resolve, ms)
-  })
 }

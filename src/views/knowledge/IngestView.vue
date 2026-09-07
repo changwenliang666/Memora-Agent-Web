@@ -2,9 +2,9 @@
   <div class="page">
     <section class="intro">
       <p class="kicker">知识库录入</p>
-      <h2>把文件送进知识库</h2>
+      <h2>把文件送入知识库</h2>
       <p class="lead">
-        选择或拖入文档后会直传到对象存储。仅支持 pdf / txt / md，单个不超过 100MB。
+        选择或拖入文档,上传文件成功后,服务端开始处理文档,处理完成后会在飞书群里通知。请耐心等待仅支持 pdf / txt / md，单个不超过 100MB。
       </p>
     </section>
 
