@@ -2,7 +2,9 @@ import axios from 'axios'
 import { http, type NormalizedHttpError } from '@/api/http'
 
 export const MAX_FILE_SIZE = 104_857_600
-export const ALLOWED_EXTENSIONS = ['pdf', 'txt', 'md'] as const
+export const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'txt', 'md', 'png', 'jpg', 'jpeg'] as const
+
+export type AllowedExtension = (typeof ALLOWED_EXTENSIONS)[number]
 
 export type IngestStatus = 'waiting' | 'processing' | 'ready' | 'failed'
 export type RecordStatus = 'processing' | 'ready' | 'failed'
@@ -86,6 +88,24 @@ export function getFileExtension(name: string): string {
   return name.includes('.') ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : ''
 }
 
+const CONTENT_TYPES: Record<AllowedExtension, string> = {
+  pdf: 'application/pdf',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  txt: 'text/plain',
+  md: 'text/markdown',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+}
+
+function isAllowedExtension(value: string): value is AllowedExtension {
+  return (ALLOWED_EXTENSIONS as readonly string[]).includes(value)
+}
+
 function resolveContentType(filename: string): string {
-  return getFileExtension(filename) === 'pdf' ? 'application/pdf' : 'text/plain'
+  const extension = getFileExtension(filename)
+  if (!isAllowedExtension(extension)) {
+    throw { message: `不支持的类型：.${extension || 'unknown'}`, code: 'http' } satisfies NormalizedHttpError
+  }
+  return CONTENT_TYPES[extension]
 }

@@ -4,7 +4,7 @@
       <p class="kicker">知识库录入</p>
       <h2>把文件送入知识库</h2>
       <p class="lead">
-        选择或拖入文档,上传文件成功后,服务端开始处理文档,处理完成后会在飞书群里通知。请耐心等待仅支持 pdf / txt / md，单个不超过 100MB。
+        选择或拖入文档，上传成功后服务端开始处理，完成后会在飞书群里通知。支持 pdf / docx / txt / md / png / jpg / jpeg，单个不超过 100MB。
       </p>
     </section>
 
@@ -14,12 +14,12 @@
       multiple
       :auto-upload="false"
       :show-file-list="false"
-      accept=".pdf,.txt,.md"
+      accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"
       @change="onChange"
     >
       <div class="drop-inner">
         <p class="drop-title">拖拽文件到这里，或点击选择</p>
-        <p class="drop-hint">支持 pdf / txt / md，单个不超过 100MB</p>
+        <p class="drop-hint">支持 pdf / docx / txt / md / png / jpg / jpeg，单个不超过 100MB</p>
       </div>
     </el-upload>
 

@@ -9,7 +9,7 @@ Memora Agent 的 Vue 3 前端：一套 RAG 知识库工作台，覆盖问答、�
 | 页面 | 路由 | 说明 |
 |---|---|---|
 | 知识问答 | `/knowledge/chat` | 单路会话；Enter 发送、Shift+Enter 换行；SSE 流式回答，可停止生成 |
-| 知识录入 | `/knowledge/ingest` | 点击或拖拽入队；支持 `pdf` / `txt` / `md` / `docx`，单文件不超过 20MB |
+| 知识录入 | `/knowledge/ingest` | 点击或拖拽入队；支持 `pdf` / `docx` / `txt` / `md` / `png` / `jpg` / `jpeg`，单文件不超过 100MB |
 | 入库记录 | `/knowledge/records` | 查看文件名、大小、状态和时间；桌面表格，窄屏卡片 |
 | 用量统计 | `/usage` | 按时 / 天 / 周 / 月 / 年查看问答与入库 token；折线、柱状、饼图读同一份数据 |
 
