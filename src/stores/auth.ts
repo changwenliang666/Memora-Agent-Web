@@ -77,6 +77,9 @@ export const useAuthStore = defineStore('auth', () => {
   function clearSession() {
     session.value = null
     persist(null)
+    void import('@/stores/ingest').then(({ useIngestStore }) => {
+      useIngestStore().stopTracking()
+    })
   }
 
   return { session, isAuthenticated, displayAccount, refresh, setSession, clearSession }

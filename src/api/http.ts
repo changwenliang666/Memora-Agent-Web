@@ -3,6 +3,12 @@ import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { resolveApiBaseURL } from '@/api/baseUrl'
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    skipErrorToast?: boolean
+  }
+}
+
 export type HttpErrorCode = 'http' | 'timeout' | 'network' | 'config'
 
 export interface NormalizedHttpError {
@@ -139,6 +145,10 @@ function toastError(error: NormalizedHttpError) {
   ElMessage.error(error.message)
 }
 
+function shouldSkipErrorToast(config?: { skipErrorToast?: boolean } | null): boolean {
+  return Boolean(config?.skipErrorToast)
+}
+
 function businessError(envelope: Envelope, status?: number): NormalizedHttpError {
   return {
     status,
@@ -182,7 +192,9 @@ http.interceptors.response.use(
     }
 
     const error = businessError(body, response.status)
-    toastError(error)
+    if (!shouldSkipErrorToast(response.config)) {
+      toastError(error)
+    }
     return Promise.reject(error)
   },
   (error: unknown) => {
@@ -191,7 +203,10 @@ http.interceptors.response.use(
       useAuthStore().clearSession()
     }
     const normalized = toNormalizedHttpError(error)
-    toastError(normalized)
+    const skipToast = axios.isAxiosError(error) && shouldSkipErrorToast(error.config)
+    if (!skipToast) {
+      toastError(normalized)
+    }
     return Promise.reject(normalized)
   },
 )
@@ -209,4 +224,4 @@ function attachAuthHeader(config: InternalAxiosRequestConfig) {
   config.headers.Authorization = `Bearer ${auth.session.token}`
 }
 
-export { http }
+export { http, shouldSkipErrorToast }

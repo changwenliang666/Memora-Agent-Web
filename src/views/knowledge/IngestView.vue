@@ -4,7 +4,7 @@
       <p class="kicker">知识库录入</p>
       <h2>把文件送入知识库</h2>
       <p class="lead">
-        选择或拖入文档，上传成功后服务端开始处理，完成后会在飞书群里通知。支持 pdf / docx / txt / md / png / jpg / jpeg，单个不超过 100MB。
+        选择或拖入文档。上传完成后会进入排队入库，处理结束可在入库记录里查看。支持 pdf / docx / txt / md / png / jpg / jpeg，单个不超过 100MB。
       </p>
     </section>
 
@@ -28,11 +28,19 @@
       <el-empty v-if="ingestStore.queue.length === 0" description="还没有文件，先选一份文档试试" />
       <ul v-else class="queue-list">
         <li v-for="item in ingestStore.queue" :key="item.id" class="queue-item">
-          <div>
+          <div class="queue-main">
             <p class="file-name">{{ item.name }}</p>
             <p class="file-meta">{{ formatSize(item.size) }} · {{ item.message }}</p>
+            <el-progress
+              v-if="item.status === 'uploading'"
+              class="upload-progress"
+              :percentage="item.progress"
+              :stroke-width="6"
+            />
           </div>
-          <el-tag :type="statusType(item.status)" size="small">{{ statusLabel(item.status) }}</el-tag>
+          <el-tag :type="ingestStatusTagType(item.status)" size="small">
+            {{ ingestStatusLabel(item.status) }}
+          </el-tag>
         </li>
       </ul>
     </section>
@@ -41,6 +49,7 @@
 
 <script setup lang="ts">
 import type { UploadFile } from 'element-plus'
+import { ingestStatusLabel, ingestStatusTagType } from '@/api/knowledge'
 import { useIngestStore } from '@/stores/ingest'
 
 const ingestStore = useIngestStore()
@@ -59,32 +68,6 @@ function formatSize(size: number) {
     return `${(size / 1024).toFixed(1)} KB`
   }
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function statusLabel(status: string) {
-  if (status === 'ready') {
-    return '入库中'
-  }
-  if (status === 'failed') {
-    return '失败' 
-  }
-  if (status === 'processing') {
-    return '处理中'
-  }
-  return '等待'
-}
-
-function statusType(status: string) {
-  if (status === 'ready') {
-    return 'success'
-  }
-  if (status === 'failed') {
-    return 'danger'
-  }
-  if (status === 'processing') {
-    return 'warning'
-  }
-  return 'info'
 }
 </script>
 
@@ -174,14 +157,26 @@ h3 {
   background: $color-surface;
 }
 
+.queue-main {
+  flex: 1;
+  min-width: 0;
+}
+
 .file-name {
   margin: 0 0 4px;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .file-meta {
   margin: 0;
   font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.upload-progress {
+  margin-top: 10px;
+  width: 100%;
 }
 
 @include phone {
@@ -191,6 +186,11 @@ h3 {
 
   h2 {
     font-size: 22px;
+  }
+
+  .queue-item {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

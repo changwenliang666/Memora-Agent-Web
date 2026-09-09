@@ -1,10 +1,4 @@
-# knowledge-ingest Specification
-
-## Purpose
-
-覆盖知识库文件进入平台的两条界面：录入页负责选择、排队，并把允许的文档直传到对象存储；入库记录页负责查看历史状态。
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Ingest page accepts files into a visible queue
 
@@ -34,20 +28,6 @@
 
 - **WHEN** 用户以手机宽度查看本次队列且其中有正在直传或入库的文件
 - **THEN** 文件名、状态和失败原因均可完整阅读，直传百分比独占一行，页面不出现横向滚动条
-
-### Requirement: Upload transfer is a replaceable step
-
-将文件传到远端的步骤 MUST 独立于选文件和排队，以便后续替换为实现（例如 Cloudflare）。本阶段该步骤可以是占位实现：文件仍 MUST 能进入队列并变更状态，MUST NOT 把云存储 SDK 写进页面组件。
-
-#### Scenario: Files can be queued without a live cloud provider
-
-- **WHEN** 远端上传尚未接通且用户添加文件
-- **THEN** 录入页不崩溃，队列仍展示这些文件及其状态
-
-#### Scenario: Failed transfer is visible
-
-- **WHEN** 上传或处理步骤失败
-- **THEN** 对应队列项标记为失败，并保留文件名
 
 ### Requirement: Records page lists ingest history
 
@@ -83,19 +63,7 @@
 - **WHEN** 用户以手机宽度打开入库记录页且记录超过一页
 - **THEN** 卡片列表下方出现可点击的上一页 / 页码 / 下一页，分页器不超出视口宽度
 
-### Requirement: Ingest and records stay on separate routes
-
-录入与入库记录 MUST 是知识库下两个独立子页。录入页 MUST NOT 用完整历史表代替队列；记录页 MUST NOT 承担选择上传文件的主入口。
-
-#### Scenario: Ingest page does not replace the records page
-
-- **WHEN** 用户在录入页查看队列
-- **THEN** 该页不展示完整入库历史表作为主内容
-
-#### Scenario: Records page does not host the drop zone as its primary action
-
-- **WHEN** 用户打开入库记录页
-- **THEN** 主内容是记录列表或空状态，而不是大块上传区
+## ADDED Requirements
 
 ### Requirement: Queue follows server ingest status after upload completes
 
@@ -123,7 +91,7 @@
 
 ### Requirement: Records page loads the signed-in user's files
 
-入库记录页 MUST 向 Agent 请求当前登录用户的文件摘要列表。列表项 MUST 使用摘要字段（标识、文件名、大小、状态、时间、失败原因），MUST NOT 请求或展示 markdown、纯文本或 OCR 正文。页面 MUST 使用分页器请求当前页：默认每页 20 条，翻页时用 `offset = (页码 - 1) * 每页条数` 替换当前页，MUST NOT 把后续页追加在旧页后面。分页器 MUST 使用列表接口返回的 `total` 计算页数，MUST NOT 用本页是否满员去猜测总数。桌面分页器 MUST 展示页码；手机分页器 MUST 紧凑且不引发横向滚动。列表请求失败时 MUST 展示可读错误，MUST NOT 回退到内置示例数据。
+入库记录页 MUST 向 Agent 请求当前登录用户的文件摘要列表。列表项 MUST 使用摘要字段（标识、文件名、大小、状态、时间、失败原因），MUST NOT 请求或展示 markdown、纯文本或 OCR 正文。页面 MUST 使用分页器请求当前页：默认每页 20 条，翻页时用 `offset = (页码 - 1) * 每页条数` 替换当前页，MUST NOT 把后续页追加在旧页后面。本页条数等于每页条数时 MUST 允许进入下一页；本页不足时 MUST 视为最后一页。桌面分页器 MUST 展示页码；手机分页器 MUST 紧凑且不引发横向滚动。列表请求失败时 MUST 展示可读错误，MUST NOT 回退到内置示例数据。
 
 #### Scenario: Signed-in user sees their files newest first
 
